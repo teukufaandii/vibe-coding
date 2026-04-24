@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { redisStore } from 'cache-manager-redis-yet';
 import { AppController } from './app.controller';
 import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -23,7 +25,12 @@ import { PrismaModule } from './prisma/prisma.module';
       }),
       inject: [ConfigService],
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
     PrismaModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [],
