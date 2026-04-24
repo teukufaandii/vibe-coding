@@ -1,10 +1,180 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+datasource db {
+  provider = "postgresql"
+}
+
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  identity  UserIdentity?
+  orders    Order[]
+  voucherUsages VoucherUsage[]
+  auditLogs AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("users")
+}
+
+model UserIdentity {
+  id           String @id @default(uuid())
+  passwordHash String
+  isTwoFactorEnabled Boolean @default(false)
+  userId       String @unique
+  user         User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("user_identities")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  sku         String   @unique
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  stock       Int      @default(0)
+  version     Int      @default(0)
+
+  orderItems  OrderItem[]
+  flashSaleItems FlashSaleItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("products")
+}
+
+model Order {
+  id        String   @id @default(uuid())
+  status    OrderStatus @default(PENDING)
+  total     Decimal  @db.Decimal(10, 2)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  items     OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("order_items")
+}
+
+model FlashSale {
+  id        String   @id @default(uuid())
+  name      String
+  startTime DateTime
+  endTime   DateTime
+  items     FlashSaleItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("flash_sales")
+}
+
+model FlashSaleItem {
+  id          String    @id @default(uuid())
+  price       Decimal   @db.Decimal(10, 2)
+  stock       Int
+  version     Int       @default(0)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  flashSaleId String
+  flashSale   FlashSale @relation(fields: [flashSaleId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("flash_sale_items")
+}
+
+model Voucher {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  discountType DiscountType
+  discountValue Decimal @db.Decimal(10, 2)
+  globalQuota Int
+  version     Int      @default(0)
+  usages      VoucherUsage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("vouchers")
+}
+
+enum DiscountType {
+  FIXED
+  PERCENTAGE
+}
+
+model VoucherUsage {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  voucherId String
+  voucher   Voucher  @relation(fields: [voucherId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userId, voucherId])
+  @@map("voucher_usages")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  entity    String
+  entityId  String
+  oldData   Json?
+  newData   Json?
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
 }
