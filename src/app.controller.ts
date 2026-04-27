@@ -9,4 +9,9 @@ export class AppController {
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: cache.Cache,
   ) {}
+
+  @Get()
+  getHello(): string {
+    return 'Hello World!';
+  }
 }
