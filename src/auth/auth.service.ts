@@ -56,17 +56,12 @@ export class AuthService {
       return newUser;
     });
 
-    const accessToken = uuidv4();
-    const sessionKey = `session:${accessToken}`;
+    const payload = { sub: user.id, email: user.email };
+    const accessToken = await this.jwtService.signAsync(payload);
 
-    await this.cacheManager.set(
-      sessionKey,
-      {
-        userId: user.id,
-        email: user.email,
-      },
-      86400 * 1000,
-    );
+    // Store token in Redis with 24h TTL (consistent with login)
+    const sessionKey = `auth:token:${user.id}`;
+    await this.cacheManager.set(sessionKey, accessToken, 24 * 60 * 60 * 1000);
 
     return {
       user: {
