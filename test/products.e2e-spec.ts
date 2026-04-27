@@ -4,6 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { cleanDatabase } from './utils/database.util';
 
 describe('Products (e2e)', () => {
   let app: INestApplication<App>;
@@ -23,7 +24,7 @@ describe('Products (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.product.deleteMany();
+    await cleanDatabase(prisma);
 
     // Seed products
     await prisma.product.createMany({

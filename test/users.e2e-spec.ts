@@ -6,6 +6,7 @@ import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { cleanDatabase } from './utils/database.util';
 
 describe('Users (e2e)', () => {
   let app: INestApplication<App>;
@@ -28,9 +29,7 @@ describe('Users (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.auditLog.deleteMany();
-    await prisma.userIdentity.deleteMany();
-    await prisma.user.deleteMany();
+    await cleanDatabase(prisma);
     await cache.clear();
 
     const user = {
