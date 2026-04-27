@@ -1,5 +1,5 @@
 import { IsOptional, IsInt, Min, IsString, IsIn } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class GetProductsDto {
   @IsOptional()
@@ -23,6 +23,7 @@ export class GetProductsDto {
   category?: string;
 
   @IsOptional()
+  @Transform(({ value }) => value?.toUpperCase())
   @IsIn(['ASC', 'DESC'])
   sort?: 'ASC' | 'DESC' = 'ASC';
 }
