@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UsersService } from './users.service';
@@ -13,5 +13,12 @@ export class UsersController {
     // The payload sub usually contains the user ID
     const userId = user.sub;
     return this.usersService.getCurrentUser(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logout(@CurrentUser() user: any) {
+    const userId = user.sub;
+    return this.usersService.logout(userId);
   }
 }
