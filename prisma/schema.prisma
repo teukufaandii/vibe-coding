@@ -46,6 +46,7 @@ model Product {
   description String?
   price       Decimal  @db.Decimal(10, 2)
   stock       Int      @default(0)
+  category    String?
   version     Int      @default(0)
 
   orderItems  OrderItem[]
