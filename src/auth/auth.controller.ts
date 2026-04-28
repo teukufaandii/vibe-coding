@@ -1,9 +1,10 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { AuthResponseDto } from './dto/auth-response.dto';
 
 @ApiTags('Authentication')
 @Controller('users')
@@ -14,7 +15,7 @@ export class AuthController {
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 201, description: 'User successfully registered.' })
+  @ApiCreatedResponse({ description: 'User successfully registered.', type: AuthResponseDto })
   @ApiResponse({ status: 400, description: 'Bad Request / Validation Error.' })
   @ApiResponse({ status: 409, description: 'Conflict / Email already exists.' })
   async register(@Body() registerDto: RegisterDto) {
@@ -32,7 +33,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login and get access token' })
-  @ApiResponse({ status: 200, description: 'Successfully authenticated.' })
+  @ApiOkResponse({ description: 'Successfully authenticated.', type: AuthResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized / Invalid credentials.' })
   async login(@Body() loginDto: LoginDto) {
     return await this.authService.login(loginDto);

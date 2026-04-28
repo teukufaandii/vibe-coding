@@ -17,7 +17,10 @@ async function bootstrap() {
     .setTitle('Vibe Coding API')
     .setDescription('API Documentation for Vibe Coding Application')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'JWT-auth',
+    )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, documentFactory);

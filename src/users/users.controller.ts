@@ -1,11 +1,12 @@
 import { Controller, Get, Post, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UsersService } from './users.service';
+import { UserProfileResponseDto } from './dto/user-profile-response.dto';
 
 @ApiTags('Users')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -13,7 +14,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('current')
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'Profile retrieved successfully.' })
+  @ApiOkResponse({ description: 'Profile retrieved successfully.', type: UserProfileResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async getCurrentUser(@CurrentUser() user: any) {
     // The payload sub usually contains the user ID
@@ -25,7 +26,7 @@ export class UsersController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout user and invalidate token' })
-  @ApiResponse({ status: 200, description: 'Logout successful.' })
+  @ApiOkResponse({ description: 'Logout successful.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async logout(@CurrentUser() user: any) {
     const userId = user.sub;

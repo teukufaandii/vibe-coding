@@ -1,7 +1,8 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { GetProductsDto } from './dto/get-products.dto';
+import { ProductsResponseDto } from './dto/products-response.dto';
 
 @ApiTags('Products')
 @Controller('products')
@@ -10,7 +11,7 @@ export class ProductsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all products with pagination and filters' })
-  @ApiResponse({ status: 200, description: 'Products retrieved successfully.' })
+  @ApiOkResponse({ description: 'Products retrieved successfully.', type: ProductsResponseDto })
   async findAll(@Query() query: GetProductsDto) {
     return this.productsService.findAll(query);
   }
