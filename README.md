@@ -12,6 +12,28 @@ The application follows a standard **Controller-Service-Module** architecture, a
 - **DTOs (`*.dto.ts`)**: Define the shape of data sent over the network. DTOs use `class-validator` and `class-transformer` for strict input validation and type transformation.
 - **Guards & Decorators**: Used for authentication, authorization, and extracting request metadata (e.g., `JwtAuthGuard`, `@CurrentUser`).
 
+## Folder Structure
+
+```text
+vibe-coding/
+├── prisma/               # Database schema and migrations
+│   ├── migrations/
+│   └── schema.prisma
+├── src/                  # Source code
+│   ├── auth/             # Authentication module (register, login, JWT)
+│   ├── prisma/           # Prisma service and module
+│   ├── products/         # Products module
+│   ├── users/            # Users module (current profile, logout)
+│   ├── app.module.ts     # Root module
+│   └── main.ts           # Application entry point
+├── test/                 # End-to-End (E2E) tests
+│   ├── utils/            # Testing utilities (e.g., database cleaner)
+│   └── *.e2e-spec.ts
+├── docker-compose.yml    # Docker services configuration
+├── package.json          # Project dependencies and scripts
+└── README.md             # Project documentation
+```
+
 ## Naming Conventions
 
 - **Folders**: Lowercase, kebab-case for feature modules (e.g., `auth`, `users`, `products`).
@@ -28,21 +50,13 @@ The application follows a standard **Controller-Service-Module** architecture, a
 
 The API is globally prefixed with `/api`.
 
-### Authentication (`/api/users`)
-- `POST /register`: Register a new user. Requires `email`, `name`, `password`, and `captchaToken`. Returns user data and a JWT access token.
-- `POST /login`: Authenticate a user. Requires `email` and `password`. Returns a JWT access token.
-- `POST /logout`: Revoke the current user's session from Redis. Requires a valid JWT token in the `Authorization` header.
-
-### Users (`/api/users`)
-- `GET /current`: Retrieve the profile of the currently authenticated user. Requires a valid JWT token in the `Authorization` header.
-
-### Products (`/api/products`)
-- `GET /`: Retrieve a paginated list of products. Supports query parameters:
-  - `page`: Page number (default: 1)
-  - `limit`: Items per page (default: 10)
-  - `search`: Case-insensitive search on product name and description (optimized via GIN Index).
-  - `category`: Filter by exact category name.
-  - `sort`: Sort by name (`ASC` or `DESC`, case-insensitive).
+| Module | Endpoint | Method | Headers | Body / Query Params | Description |
+|---|---|---|---|---|---|
+| **Auth** | `/users/register` | `POST` | `Content-Type: application/json` | **Body:** <br/>`email` (string)<br/>`name` (string)<br/>`password` (string)<br/>`captchaToken` (string) | Registers a new user and returns user data along with a JWT access token. |
+| **Auth** | `/users/login` | `POST` | `Content-Type: application/json` | **Body:** <br/>`email` (string)<br/>`password` (string) | Authenticates a user and returns a JWT access token. |
+| **Users** | `/users/logout` | `POST` | `Authorization: Bearer <token>` | *None* | Revokes the current user's session from Redis. |
+| **Users** | `/users/current` | `GET` | `Authorization: Bearer <token>` | *None* | Retrieves the profile of the currently authenticated user. |
+| **Products** | `/products` | `GET` | *None* | **Query Params:** <br/>`page` (int, default: 1)<br/>`limit` (int, default: 10)<br/>`search` (string)<br/>`category` (string)<br/>`sort` ('ASC'/'DESC') | Retrieves a paginated list of products. Supports case-insensitive text search (via GIN Index), category filtering, and sorting. |
 
 ## Database Schema
 
