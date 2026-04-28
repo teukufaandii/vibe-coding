@@ -1,98 +1,148 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Vibe Coding Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A robust backend REST API built with NestJS, PostgreSQL, Prisma, and Redis.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Application Architecture
 
-## Description
+The application follows a standard **Controller-Service-Module** architecture, adhering to NestJS best practices:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Modules (`*.module.ts`)**: Encapsulate related components (e.g., `AuthModule`, `UsersModule`, `ProductsModule`). The `AppModule` serves as the root module.
+- **Controllers (`*.controller.ts`)**: Handle incoming HTTP requests, process routing, and map inputs to Data Transfer Objects (DTOs).
+- **Services (`*.service.ts`)**: Contain the core business logic. They interact with the database using Prisma and other external services like Redis.
+- **DTOs (`*.dto.ts`)**: Define the shape of data sent over the network. DTOs use `class-validator` and `class-transformer` for strict input validation and type transformation.
+- **Guards & Decorators**: Used for authentication, authorization, and extracting request metadata (e.g., `JwtAuthGuard`, `@CurrentUser`).
 
-## Project setup
+## Folder Structure
 
-```bash
-$ npm install
+```text
+vibe-coding/
+├── prisma/               # Database schema and migrations
+│   ├── migrations/
+│   └── schema.prisma
+├── src/                  # Source code
+│   ├── auth/             # Authentication module (register, login, JWT)
+│   ├── prisma/           # Prisma service and module
+│   ├── products/         # Products module
+│   ├── users/            # Users module (current profile, logout)
+│   ├── app.module.ts     # Root module
+│   └── main.ts           # Application entry point
+├── test/                 # End-to-End (E2E) tests
+│   ├── utils/            # Testing utilities (e.g., database cleaner)
+│   └── *.e2e-spec.ts
+├── docker-compose.yml    # Docker services configuration
+├── package.json          # Project dependencies and scripts
+└── README.md             # Project documentation
 ```
 
-## Compile and run the project
+## Naming Conventions
 
-```bash
-# development
-$ npm run start
+- **Folders**: Lowercase, kebab-case for feature modules (e.g., `auth`, `users`, `products`).
+- **Files**: `<feature>.<type>.ts`
+  - Controllers: `users.controller.ts`
+  - Services: `users.service.ts`
+  - Modules: `users.module.ts`
+  - DTOs: `create-user.dto.ts`
+  - Tests: `users.e2e-spec.ts`
+- **Classes/Interfaces**: PascalCase (e.g., `UsersController`, `RegisterDto`).
+- **Variables/Functions**: camelCase.
 
-# watch mode
-$ npm run start:dev
+## Available APIs
 
-# production mode
-$ npm run start:prod
+The API is globally prefixed with `/api`.
+
+| Module | Endpoint | Method | Headers | Body / Query Params | Description |
+|---|---|---|---|---|---|
+| **Auth** | `/users/register` | `POST` | `Content-Type: application/json` | **Body:** <br/>`email` (string)<br/>`name` (string)<br/>`password` (string)<br/>`captchaToken` (string) | Registers a new user and returns user data along with a JWT access token. |
+| **Auth** | `/users/login` | `POST` | `Content-Type: application/json` | **Body:** <br/>`email` (string)<br/>`password` (string) | Authenticates a user and returns a JWT access token. |
+| **Users** | `/users/logout` | `POST` | `Authorization: Bearer <token>` | *None* | Revokes the current user's session from Redis. |
+| **Users** | `/users/current` | `GET` | `Authorization: Bearer <token>` | *None* | Retrieves the profile of the currently authenticated user. |
+| **Products** | `/products` | `GET` | *None* | **Query Params:** <br/>`page` (int, default: 1)<br/>`limit` (int, default: 10)<br/>`search` (string)<br/>`category` (string)<br/>`sort` ('ASC'/'DESC') | Retrieves a paginated list of products. Supports case-insensitive text search (via GIN Index), category filtering, and sorting. |
+
+## Database Schema
+
+The database is managed using Prisma ORM and PostgreSQL. The core models are:
+
+- **User (`users`)**: Stores core user information (`email`, `name`).
+- **UserIdentity (`user_identities`)**: Securely stores authentication credentials (`passwordHash`). Relates 1-to-1 with `User`.
+- **AuditLog (`audit_logs`)**: Tracks critical actions (e.g., user registrations).
+- **Product (`products`)**: Stores product inventory details (`sku`, `name`, `description`, `price`, `stock`, `category`). Features a PostgreSQL **GIN Index** using `pg_trgm` on `name` and `description` for highly optimized text searching.
+- **Order / OrderItem (`orders`, `order_items`)**: Tracks user purchases.
+- **FlashSale / FlashSaleItem**: Manages time-limited sales.
+- **Voucher / VoucherUsage**: Handles discount codes and their usage limits.
+
+*(For full details, view `prisma/schema.prisma`)*
+
+## Technology Stack & Libraries
+
+- **Framework**: [NestJS](https://nestjs.com/) (v11)
+- **Language**: TypeScript
+- **Database**: PostgreSQL (with `pg_trgm` extension for GIN indexing)
+- **ORM**: [Prisma](https://www.prisma.io/) (v7.8)
+- **Caching & Session Management**: Redis (via `cache-manager` and `cache-manager-redis-yet`)
+- **Security & Authentication**: `@nestjs/jwt`, `argon2` (password hashing)
+- **Validation**: `class-validator`, `class-transformer`
+- **Testing**: Jest, Supertest
+
+## Setup Instructions
+
+### Prerequisites
+- Node.js (v20+ recommended)
+- Docker & Docker Compose (for running PostgreSQL and Redis locally)
+
+### 1. Environment Configuration
+Create a `.env` file in the root directory and configure the variables:
+```env
+# Database
+POSTGRES_USER=myuser
+POSTGRES_PASSWORD=mypassword
+POSTGRES_DB=vibe_coding_db
+DATABASE_URL="postgresql://myuser:mypassword@localhost:5433/vibe_coding_db?schema=public"
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# JWT
+JWT_SECRET=super-secret-key-change-me
 ```
 
-## Run tests
-
+### 2. Start Infrastructure
+Start the PostgreSQL database and Redis server using Docker Compose:
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker-compose up -d
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+### 3. Install Dependencies
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 4. Database Initialization
+Apply Prisma migrations to initialize the database schema and generate the Prisma Client:
+```bash
+npx prisma generate
+npx prisma migrate dev
+```
 
-## Resources
+## How to Run the Application
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+# Run in development mode (with hot-reload)
+npm run start:dev
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# Build and run in production mode
+npm run build
+npm run start:prod
+```
+The server will start on `http://localhost:3000`. API endpoints are accessible at `http://localhost:3000/api`.
 
-## Support
+## How to Test the Application
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+The project includes a comprehensive suite of End-to-End (E2E) tests covering all major modules (Auth, Users, Products). Tests are configured to run sequentially (`--runInBand`) to ensure strict database consistency.
 
-## Stay in touch
+```bash
+# Run E2E tests
+npm run test:e2e
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+The testing suite automatically cleans up the database and Redis cache between test scenarios using centralized utilities located in `test/utils/database.util.ts`.
